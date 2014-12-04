@@ -2,8 +2,10 @@
 #include <jni.h>
 
 #include <windows.h>
+#include <string>
 #include <assert.h>
 #include <stdlib.h>
+using namespace std;
 
 struct cobj{
 	jstring device;
@@ -209,4 +211,70 @@ JNIEXPORT jint JNICALL Java_com_ray_JComm__1settimeout
 	SetCommTimeouts(h, &t);
 
 	return com_ray_JComm_ERROR_NOERROR;
+}
+
+JNIEXPORT jobjectArray JNICALL Java_com_ray_JComm_getCommNames
+  (JNIEnv *env, jobject obj)
+{
+	string strSerialList[256];  // 临时定义 256 个字符串组，因为系统最多也就 256 个
+
+	HKEY hKey;
+
+	LPCTSTR data_Set = "HARDWARE\\DEVICEMAP\\SERIALCOMM\\";
+
+	long ret0 = (::RegOpenKeyEx(HKEY_LOCAL_MACHINE, data_Set, 0, KEY_READ, &hKey));
+
+	if (ret0 != ERROR_SUCCESS)
+
+	{
+
+		return NULL;
+
+	}
+
+	int i = 0;
+
+	CHAR Name[25];
+
+	UCHAR szPortName[25];
+
+	LONG Status;
+
+	DWORD dwIndex = 0;
+
+	DWORD dwName;
+
+	DWORD dwSizeofPortName;
+
+	DWORD Type;
+
+	dwName = sizeof(Name);
+
+	dwSizeofPortName = sizeof(szPortName);
+
+	do
+	{
+		Status = RegEnumValue(hKey, dwIndex++, Name, &dwName, NULL, &Type,
+			szPortName, &dwSizeofPortName);
+
+		if ((Status == ERROR_SUCCESS) || (Status == ERROR_MORE_DATA))
+		{
+			strSerialList[i] = string(reinterpret_cast<const char *>(szPortName));       // 串口字符串保存
+			//printf("%s\n", strSerialList[i]);
+			i++;// 串口计数
+
+		}
+	} while ((Status == ERROR_SUCCESS) || (Status == ERROR_MORE_DATA));
+	//printf("%d", i);
+	RegCloseKey(hKey);
+	if (i == 0)
+		return NULL;
+	jclass strclass = env->FindClass("java/lang/String");
+	jobjectArray stringArray = env->NewObjectArray(i, strclass, NULL);
+	for (int j = 0; j != i; ++j)
+	{
+		env->SetObjectArrayElement(stringArray, j, 
+			(jobject)env->NewStringUTF(strSerialList[j].c_str()));
+	}
+	return stringArray;
 }

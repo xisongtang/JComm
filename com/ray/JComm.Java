@@ -94,7 +94,13 @@ public class JComm{
 		this.timeout = timeout;
 		isTimeoutDirty = true;
 	}
-
+	public boolean isTimeoutDirty(){
+		return isTimeoutDirty;
+	}
+	public boolean isOptionDirty(){
+		return isOptionDirty;
+	}
+	
 	public int getTimeout(){
 		return timeout;
 	}
@@ -105,6 +111,10 @@ public class JComm{
 	}
 	public void setBaud(long baud){
 		this.baud = baud;
+		isOptionDirty = true;
+	}
+	public void setStop(int stop){
+		this.stop = stop;
 		isOptionDirty = true;
 	}
 	public void setData(int data){
@@ -146,7 +156,7 @@ public class JComm{
 		close();
 		super.finalize();
 	}
-	public byte[] readTimeout(int time_out) throws IOException{
+	public byte[] readTimeout(int timeout) throws IOException{
 		this.timeout = timeout;
 		isTimeoutDirty = true;
 		return read();
@@ -169,7 +179,10 @@ public class JComm{
 		int ret = _read(bytes);
 		if (ret < 0)
 			throw new IOException(errors[-ret]);
-		return bytes;
+		byte[] bs = new byte[ret];
+		for (int i = 0; i != ret; ++i)
+			bs[i] = bytes[i]; 
+		return bs;
 	}
 
 	public int writeTimeout(byte[] bytes, int timeout) throws IOException{
@@ -223,7 +236,15 @@ public class JComm{
 	}
 
 	static{
-		System.loadLibrary("JComm");
+		try{
+			System.loadLibrary("JComm64");
+		}catch (java.lang.UnsatisfiedLinkError e){
+			try {
+				System.loadLibrary("JComm32");
+			} catch (java.lang.UnsatisfiedLinkError e2) {
+				System.loadLibrary("JComm");
+			}
+		}
 	}
 	private native int _open();
 	private native int _close();
@@ -231,10 +252,8 @@ public class JComm{
 	private native int _write(byte[] bytes, int length);
 	private native int _read(byte[] bytes);
 	private native int _setoption();
-	
+	public static native String[] getCommNames();
 	public static void main(String[] args){
-		JComm com = new JComm();
-		//com.open();
-		//com.close();
+		new JComm();
 	}
 }

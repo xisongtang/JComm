@@ -143,6 +143,14 @@ JNIEXPORT jint JNICALL Java_com_ray_JComm__1read
 JNIEXPORT jint JNICALL Java_com_ray_JComm__1setoption
   (JNIEnv *, jobject);
 
+/*
+ * Class:     com_ray_JComm
+ * Method:    getCommNames
+ * Signature: ()[Ljava/lang/String;
+ */
+JNIEXPORT jobjectArray JNICALL Java_com_ray_JComm_getCommNames
+  (JNIEnv *, jobject);
+
 #ifdef __cplusplus
 }
 #endif
